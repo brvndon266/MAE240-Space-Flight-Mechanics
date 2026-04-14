@@ -1,0 +1,689 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>HW1_Q4</title><meta name="generator" content="MATLAB 9.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2026-04-13"><meta name="DC.source" content="HW1_Q4.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">HW 1 &#8212; Numerical simulation of the N-body problem</a></li><li><a href="#2">1) Problem setup</a></li><li><a href="#3">2) Integrate the first-order system xdot = f(x)</a></li><li><a href="#4">3) Part (a): 3D trajectories</a></li><li><a href="#5">4) Part (b): Center of mass</a></li><li><a href="#6">5) Part (c): Angular momentum</a></li><li><a href="#7">6) Part (d): Total energy</a></li><li><a href="#8">7) Summary Section</a></li><li><a href="#9">=========================</a></li></ul></div><h2 id="1">HW 1 &#8212; Numerical simulation of the N-body problem</h2><p>MAE 240 This script:   (a) integrates the Newtonian N-body equations in first-order state-space form   (b) plots 3D trajectories with initial/final markers   (c) verifies center-of-mass motion   (d) verifies angular momentum conservation   (e) verifies total energy behavior</p><p>State vector:   x = [r1; r2; ...; rN; v1; v2; ...; vN] in R^(6N)</p><p>Units used here:   distance = km   mass     = kg   time     = s</p><pre class="codeinput">clear; clc; close <span class="string">all</span>;
+</pre><h2 id="2">1) Problem setup</h2><pre class="codeinput">G  = 6.67430e-20;        <span class="comment">% km^3/(kg s^2)</span>
+AU = 1.496e8;            <span class="comment">% km</span>
+yr = 365.25*24*3600;     <span class="comment">% s</span>
+
+<span class="comment">% -----------------------------</span>
+<span class="comment">% Choose N &gt;= 3 bodies</span>
+<span class="comment">% -----------------------------</span>
+N = 4;
+
+<span class="comment">% Brief justification:</span>
+<span class="comment">% One dominant central mass plus three lighter bodies gives a clear,</span>
+<span class="comment">% stable test case for verifying center of mass, angular momentum,</span>
+<span class="comment">% and total energy behavior.</span>
+
+bodyNames = {<span class="string">'Body 1'</span>,<span class="string">'Body 2'</span>,<span class="string">'Body 3'</span>,<span class="string">'Body 4'</span>};
+
+<span class="comment">% Masses [kg]</span>
+m = [1.989e30, 5.972e24, 6.39e23, 4.867e24];   <span class="comment">% Sun/Earth/Mars/Venus-like</span>
+M = sum(m);
+
+<span class="comment">% Initial positions [km]</span>
+<span class="comment">% Planar initial conditions: z = 0 for all bodies</span>
+r0 = zeros(N,3);
+r0(1,:) = [0, 0, 0];
+r0(2,:) = [1.000*AU, 0, 0];
+r0(3,:) = [0, 1.524*AU, 0];
+r0(4,:) = [-0.723*AU, 0, 0];
+
+<span class="comment">% Initial velocities [km/s]</span>
+<span class="comment">% Approximately circular around Body 1</span>
+v0 = zeros(N,3);
+v0(1,:) = [0, 0, 0];
+v0(2,:) = [0,  sqrt(G*m(1)/norm(r0(2,:))), 0];
+v0(3,:) = [-sqrt(G*m(1)/norm(r0(3,:))), 0, 0];
+v0(4,:) = [0, -sqrt(G*m(1)/norm(r0(4,:))), 0];
+
+<span class="comment">% Optional: shift to exact zero total momentum frame</span>
+P0 = sum(m.' .* v0, 1);
+vCM0 = P0 / M;
+<span class="keyword">for</span> i = 1:N
+    v0(i,:) = v0(i,:) - vCM0;
+<span class="keyword">end</span>
+
+<span class="comment">% Pack into state vector x0 = [r_all; v_all]</span>
+x0 = [reshape(r0.',3*N,1); reshape(v0.',3*N,1)];
+
+<span class="comment">% Time span</span>
+t0   = 0;
+tf   = 3*yr;
+tout = linspace(t0, tf, 3000);
+
+<span class="comment">% ODE solver settings</span>
+opts = odeset(<span class="string">'RelTol'</span>,1e-11,<span class="string">'AbsTol'</span>,1e-13);
+</pre><h2 id="3">2) Integrate the first-order system xdot = f(x)</h2><pre class="codeinput">[T, X] = ode45(@(t,x) eom_nbody(t,x,m,G), tout, x0, opts);
+
+<span class="comment">% Extract position and velocity histories</span>
+Rhist = X(:,1:3*N);
+Vhist = X(:,3*N+1:6*N);
+</pre><h2 id="4">3) Part (a): 3D trajectories</h2><pre class="codeinput">figure(<span class="string">'Color'</span>,<span class="string">'w'</span>);
+hold <span class="string">on</span>; grid <span class="string">on</span>; box <span class="string">on</span>; axis <span class="string">equal</span>;
+
+colors = lines(N);
+
+<span class="comment">% Store only orbit line handles for legend</span>
+hOrbit = gobjects(N,1);
+
+<span class="keyword">for</span> i = 1:N
+    Ri = Rhist(:,3*i-2:3*i);
+
+    <span class="comment">% Orbit line</span>
+    hOrbit(i) = plot3(Ri(:,1)/AU, Ri(:,2)/AU, Ri(:,3)/AU, <span class="keyword">...</span>
+        <span class="string">'LineWidth'</span>,1.8, <span class="string">'Color'</span>,colors(i,:));
+
+    <span class="comment">% Initial marker</span>
+    plot3(Ri(1,1)/AU, Ri(1,2)/AU, Ri(1,3)/AU, <span class="keyword">...</span>
+        <span class="string">'o'</span>, <span class="string">'MarkerSize'</span>,8, <span class="string">'LineWidth'</span>,1.5, <span class="keyword">...</span>
+        <span class="string">'Color'</span>,colors(i,:), <span class="string">'HandleVisibility'</span>,<span class="string">'off'</span>);
+
+    <span class="comment">% Final marker</span>
+    plot3(Ri(end,1)/AU, Ri(end,2)/AU, Ri(end,3)/AU, <span class="keyword">...</span>
+        <span class="string">'s'</span>, <span class="string">'MarkerSize'</span>,8, <span class="string">'LineWidth'</span>,1.5, <span class="keyword">...</span>
+        <span class="string">'Color'</span>,colors(i,:), <span class="string">'HandleVisibility'</span>,<span class="string">'off'</span>);
+<span class="keyword">end</span>
+
+xlabel(<span class="string">'x [AU]'</span>);
+ylabel(<span class="string">'y [AU]'</span>);
+zlabel(<span class="string">'z [AU]'</span>);
+title(<span class="string">'3D trajectories of all N=4 bodies'</span>);
+legend(hOrbit, bodyNames, <span class="string">'Location'</span>,<span class="string">'best'</span>);
+view(3);
+
+<span class="comment">% Note showing marker meaning</span>
+text(0.02, 0.95, <span class="string">'o = initial position,  s = final position'</span>, <span class="keyword">...</span>
+    <span class="string">'Units'</span>,<span class="string">'normalized'</span>, <span class="string">'FontSize'</span>,10);
+</pre><img vspace="5" hspace="5" src="HW1_Q4_01.png" alt=""> <h2 id="5">4) Part (b): Center of mass</h2><p>Compute numerical center of mass r_C(t)</p><pre class="codeinput">rC = zeros(length(T),3);
+vC = zeros(length(T),3);
+
+<span class="keyword">for</span> k = 1:length(T)
+    rk = zeros(N,3);
+    vk = zeros(N,3);
+
+    <span class="keyword">for</span> i = 1:N
+        rk(i,:) = Rhist(k,3*i-2:3*i);
+        vk(i,:) = Vhist(k,3*i-2:3*i);
+    <span class="keyword">end</span>
+
+    rC(k,:) = (m * rk) / M;
+    vC(k,:) = (m * vk) / M;
+<span class="keyword">end</span>
+
+<span class="comment">% Linear prediction:</span>
+<span class="comment">% r_C(t) = r_C(t0) + rdot_C(t0)*(t-t0)</span>
+rC0 = rC(1,:);
+vC0 = vC(1,:);
+rC_pred = rC0 + (T - T(1))*vC0;
+
+<span class="comment">% Deviation</span>
+rC_err = vecnorm(rC - rC_pred, 2, 2);
+max_rC_dev = max(rC_err);
+
+fprintf(<span class="string">'\n===== Center of Mass Check =====\n'</span>);
+fprintf(<span class="string">'Max deviation between numerical r_C(t) and linear prediction = %.6e km\n'</span>, max_rC_dev);
+
+figure(<span class="string">'Color'</span>,<span class="string">'w'</span>);
+tiledlayout(3,1);
+
+labels = {<span class="string">'x'</span>,<span class="string">'y'</span>,<span class="string">'z'</span>};
+<span class="keyword">for</span> j = 1:3
+    nexttile;
+    plot(T/yr, rC(:,j)/AU,<span class="string">'k'</span>,<span class="string">'LineWidth'</span>,1.8); hold <span class="string">on</span>;
+    plot(T/yr, rC_pred(:,j)/AU,<span class="string">'r--'</span>,<span class="string">'LineWidth'</span>,1.4);
+    grid <span class="string">on</span>;
+    ylabel(sprintf(<span class="string">'r_{C,%s} [AU]'</span>,labels{j}));
+    <span class="keyword">if</span> j == 1
+        title(<span class="string">'Center of mass: numerical history vs linear prediction'</span>);
+        legend(<span class="string">'Numerical'</span>,<span class="string">'Linear prediction'</span>,<span class="string">'Location'</span>,<span class="string">'best'</span>);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> j == 3
+        xlabel(<span class="string">'Time [yr]'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+===== Center of Mass Check =====
+Max deviation between numerical r_C(t) and linear prediction = 1.338799e-11 km
+</pre><img vspace="5" hspace="5" src="HW1_Q4_02.png" alt=""> <img vspace="5" hspace="5" src="HW1_Q4_03.png" alt=""> <h2 id="6">5) Part (c): Angular momentum</h2><p>H(t) = sum_i m_i r_i x v_i</p><pre class="codeinput">H = zeros(length(T),3);
+
+<span class="keyword">for</span> k = 1:length(T)
+    Hk = [0 0 0];
+    <span class="keyword">for</span> i = 1:N
+        ri = Rhist(k,3*i-2:3*i);
+        vi = Vhist(k,3*i-2:3*i);
+        Hk = Hk + m(i)*cross(ri,vi);
+    <span class="keyword">end</span>
+    H(k,:) = Hk;
+<span class="keyword">end</span>
+
+H0 = H(1,:);
+H0_norm = norm(H0);
+rel_H_drift = vecnorm(H - H0, 2, 2) / H0_norm;
+max_rel_H_drift = max(rel_H_drift);
+
+fprintf(<span class="string">'\n===== Angular Momentum Check =====\n'</span>);
+fprintf(<span class="string">'Max relative drift ||H(t)-H(t0)|| / ||H(t0)|| = %.6e\n'</span>, max_rel_H_drift);
+
+<span class="comment">% Verify planarity</span>
+z_all = zeros(length(T),N);
+<span class="keyword">for</span> i = 1:N
+    z_all(:,i) = Rhist(:,3*i);
+<span class="keyword">end</span>
+max_abs_z = max(abs(z_all),[],<span class="string">'all'</span>);
+
+fprintf(<span class="string">'Max absolute out-of-plane displacement |z| = %.6e km\n'</span>, max_abs_z);
+
+figure(<span class="string">'Color'</span>,<span class="string">'w'</span>);
+tiledlayout(3,1);
+
+<span class="keyword">for</span> j = 1:3
+    nexttile;
+    plot(T/yr, H(:,j),<span class="string">'LineWidth'</span>,1.7);
+    grid <span class="string">on</span>;
+    ylabel(sprintf(<span class="string">'H_%s [kg km^2/s]'</span>,labels{j}));
+    <span class="keyword">if</span> j == 1
+        title(<span class="string">'Angular momentum components vs time'</span>);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> j == 3
+        xlabel(<span class="string">'Time [yr]'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+===== Angular Momentum Check =====
+Max relative drift ||H(t)-H(t0)|| / ||H(t0)|| = 4.771240e-12
+Max absolute out-of-plane displacement |z| = 0.000000e+00 km
+</pre><img vspace="5" hspace="5" src="HW1_Q4_04.png" alt=""> <h2 id="7">6) Part (d): Total energy</h2><p>T = kinetic energy U = positive gravitational potential magnitude E = T - U</p><pre class="codeinput">KE = zeros(length(T),1);
+U  = zeros(length(T),1);
+E  = zeros(length(T),1);
+
+<span class="keyword">for</span> k = 1:length(T)
+    <span class="comment">% Kinetic energy</span>
+    Tk = 0;
+    <span class="keyword">for</span> i = 1:N
+        vi = Vhist(k,3*i-2:3*i);
+        Tk = Tk + 0.5*m(i)*dot(vi,vi);
+    <span class="keyword">end</span>
+
+    <span class="comment">% Positive potential-energy magnitude U</span>
+    Uk = 0;
+    <span class="keyword">for</span> i = 1:N-1
+        ri = Rhist(k,3*i-2:3*i);
+        <span class="keyword">for</span> j = i+1:N
+            rj = Rhist(k,3*j-2:3*j);
+            dij = norm(rj-ri);
+            Uk = Uk + G*m(i)*m(j)/dij;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    KE(k) = Tk;
+    U(k)  = Uk;
+    E(k)  = Tk - Uk;
+<span class="keyword">end</span>
+
+rel_E_err = abs(E - E(1)) / abs(E(1));
+
+fprintf(<span class="string">'\n===== Energy Check =====\n'</span>);
+fprintf(<span class="string">'Initial total energy E(t0) = %.6e kg km^2/s^2\n'</span>, E(1));
+fprintf(<span class="string">'Max relative energy error |E(t)-E(t0)| / |E(t0)| = %.6e\n'</span>, max(rel_E_err));
+
+figure(<span class="string">'Color'</span>,<span class="string">'w'</span>);
+tiledlayout(2,1);
+
+nexttile;
+plot(T/yr, KE/abs(E(1)), <span class="string">'b'</span>,<span class="string">'LineWidth'</span>,1.7); hold <span class="string">on</span>;
+plot(T/yr, U /abs(E(1)), <span class="string">'r'</span>,<span class="string">'LineWidth'</span>,1.7);
+plot(T/yr, E /abs(E(1)), <span class="string">'k'</span>,<span class="string">'LineWidth'</span>,2.0);
+grid <span class="string">on</span>;
+ylabel(<span class="string">'Normalized energy'</span>);
+title(<span class="string">'Kinetic, potential, and total energy'</span>);
+legend(<span class="string">'T(t)'</span>,<span class="string">'U(t)'</span>,<span class="string">'E(t)=T(t)-U(t)'</span>,<span class="string">'Location'</span>,<span class="string">'best'</span>);
+
+nexttile;
+semilogy(T/yr, rel_E_err + eps,<span class="string">'k'</span>,<span class="string">'LineWidth'</span>,1.7);
+grid <span class="string">on</span>;
+xlabel(<span class="string">'Time [yr]'</span>);
+ylabel(<span class="string">'|E(t)-E(t_0)| / |E(t_0)|'</span>);
+title(<span class="string">'Relative energy error'</span>);
+</pre><pre class="codeoutput">
+===== Energy Check =====
+Initial total energy E(t0) = -5.822528e+27 kg km^2/s^2
+Max relative energy error |E(t)-E(t0)| / |E(t0)| = 1.252937e-11
+</pre><img vspace="5" hspace="5" src="HW1_Q4_05.png" alt=""> <h2 id="8">7) Summary Section</h2><pre class="codeinput">fprintf(<span class="string">'\n===== In summary =====\n'</span>);
+fprintf(<span class="string">'1. N = %d bodies were used.\n'</span>, N);
+fprintf(<span class="string">'2. The system was written in first-order state-space form xdot = f(x). \n'</span>);
+fprintf(<span class="string">'3. ode45 was used to integrate the equations of motion.\n'</span>);
+fprintf(<span class="string">'4. The center of mass followed the expected linear motion with max deviation %.3e km.\n'</span>, max_rC_dev);
+fprintf(<span class="string">'5. The angular momentum relative drift was %.3e.\n'</span>, max_rel_H_drift);
+fprintf(<span class="string">'6. The maximum energy relative error was %.3e.\n'</span>, max(rel_E_err));
+fprintf([<span class="string">'7. The relative energy error stays very small during the entire simulation and increases \n'</span> <span class="keyword">...</span>
+    <span class="string">'only gradually over time. This behavior shows that the numerical integration is stable and \n'</span> <span class="keyword">...</span>
+    <span class="string">'accurately captures the system dynamics over the chosen time interval. The small drift is \n'</span> <span class="keyword">...</span>
+    <span class="string">'caused by the accumulation of truncation and roundoff errors from the ODE solver, which is \n'</span> <span class="keyword">...</span>
+    <span class="string">'expected when using a method such as ode45.\n'</span>]);
+</pre><pre class="codeoutput">
+===== In summary =====
+1. N = 4 bodies were used.
+2. The system was written in first-order state-space form xdot = f(x). 
+3. ode45 was used to integrate the equations of motion.
+4. The center of mass followed the expected linear motion with max deviation 1.339e-11 km.
+5. The angular momentum relative drift was 4.771e-12.
+6. The maximum energy relative error was 1.253e-11.
+7. The relative energy error stays very small during the entire simulation and increases 
+only gradually over time. This behavior shows that the numerical integration is stable and 
+accurately captures the system dynamics over the chosen time interval. The small drift is 
+caused by the accumulation of truncation and roundoff errors from the ODE solver, which is 
+expected when using a method such as ode45.
+</pre><h2 id="9">=========================</h2><p>Local function =========================</p><pre class="codeinput"><span class="keyword">function</span> dxdt = eom_nbody(~, x, m, G)
+    N = length(m);
+
+    r = x(1:3*N);
+    v = x(3*N+1:6*N);
+
+    a = zeros(3*N,1);
+
+    <span class="keyword">for</span> i = 1:N
+        ri = r(3*i-2:3*i);
+        ai = [0;0;0];
+
+        <span class="keyword">for</span> j = 1:N
+            <span class="keyword">if</span> j ~= i
+                rj = r(3*j-2:3*j);
+                rij = ri - rj;
+                dij = norm(rij);
+                ai = ai - G*m(j)*rij/(dij^3);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        a(3*i-2:3*i) = ai;
+    <span class="keyword">end</span>
+
+    dxdt = [v; a];
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% HW 1 — Numerical simulation of the N-body problem
+% MAE 240
+% This script:
+%   (a) integrates the Newtonian N-body equations in first-order state-space form
+%   (b) plots 3D trajectories with initial/final markers
+%   (c) verifies center-of-mass motion
+%   (d) verifies angular momentum conservation
+%   (e) verifies total energy behavior
+%
+% State vector:
+%   x = [r1; r2; ...; rN; v1; v2; ...; vN] in R^(6N)
+%
+% Units used here:
+%   distance = km
+%   mass     = kg
+%   time     = s
+
+clear; clc; close all;
+
+%% 1) Problem setup
+G  = 6.67430e-20;        % km^3/(kg s^2)
+AU = 1.496e8;            % km
+yr = 365.25*24*3600;     % s
+
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Choose N >= 3 bodies
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+N = 4;
+
+% Brief justification:
+% One dominant central mass plus three lighter bodies gives a clear,
+% stable test case for verifying center of mass, angular momentum,
+% and total energy behavior.
+
+bodyNames = {'Body 1','Body 2','Body 3','Body 4'};
+
+% Masses [kg]
+m = [1.989e30, 5.972e24, 6.39e23, 4.867e24];   % Sun/Earth/Mars/Venus-like
+M = sum(m);
+
+% Initial positions [km]
+% Planar initial conditions: z = 0 for all bodies
+r0 = zeros(N,3);
+r0(1,:) = [0, 0, 0];
+r0(2,:) = [1.000*AU, 0, 0];
+r0(3,:) = [0, 1.524*AU, 0];
+r0(4,:) = [-0.723*AU, 0, 0];
+
+% Initial velocities [km/s]
+% Approximately circular around Body 1
+v0 = zeros(N,3);
+v0(1,:) = [0, 0, 0];
+v0(2,:) = [0,  sqrt(G*m(1)/norm(r0(2,:))), 0];
+v0(3,:) = [-sqrt(G*m(1)/norm(r0(3,:))), 0, 0];
+v0(4,:) = [0, -sqrt(G*m(1)/norm(r0(4,:))), 0];
+
+% Optional: shift to exact zero total momentum frame
+P0 = sum(m.' .* v0, 1);
+vCM0 = P0 / M;
+for i = 1:N
+    v0(i,:) = v0(i,:) - vCM0;
+end
+
+% Pack into state vector x0 = [r_all; v_all]
+x0 = [reshape(r0.',3*N,1); reshape(v0.',3*N,1)];
+
+% Time span
+t0   = 0;
+tf   = 3*yr;
+tout = linspace(t0, tf, 3000);
+
+% ODE solver settings
+opts = odeset('RelTol',1e-11,'AbsTol',1e-13);
+
+%% 2) Integrate the first-order system xdot = f(x)
+[T, X] = ode45(@(t,x) eom_nbody(t,x,m,G), tout, x0, opts);
+
+% Extract position and velocity histories
+Rhist = X(:,1:3*N);
+Vhist = X(:,3*N+1:6*N);
+
+%% 3) Part (a): 3D trajectories
+figure('Color','w');
+hold on; grid on; box on; axis equal;
+
+colors = lines(N);
+
+% Store only orbit line handles for legend
+hOrbit = gobjects(N,1);
+
+for i = 1:N
+    Ri = Rhist(:,3*i-2:3*i);
+
+    % Orbit line
+    hOrbit(i) = plot3(Ri(:,1)/AU, Ri(:,2)/AU, Ri(:,3)/AU, ...
+        'LineWidth',1.8, 'Color',colors(i,:));
+
+    % Initial marker
+    plot3(Ri(1,1)/AU, Ri(1,2)/AU, Ri(1,3)/AU, ...
+        'o', 'MarkerSize',8, 'LineWidth',1.5, ...
+        'Color',colors(i,:), 'HandleVisibility','off');
+
+    % Final marker
+    plot3(Ri(end,1)/AU, Ri(end,2)/AU, Ri(end,3)/AU, ...
+        's', 'MarkerSize',8, 'LineWidth',1.5, ...
+        'Color',colors(i,:), 'HandleVisibility','off');
+end
+
+xlabel('x [AU]');
+ylabel('y [AU]');
+zlabel('z [AU]');
+title('3D trajectories of all N=4 bodies');
+legend(hOrbit, bodyNames, 'Location','best');
+view(3);
+
+% Note showing marker meaning
+text(0.02, 0.95, 'o = initial position,  s = final position', ...
+    'Units','normalized', 'FontSize',10);
+
+%% 4) Part (b): Center of mass
+% Compute numerical center of mass r_C(t)
+rC = zeros(length(T),3);
+vC = zeros(length(T),3);
+
+for k = 1:length(T)
+    rk = zeros(N,3);
+    vk = zeros(N,3);
+
+    for i = 1:N
+        rk(i,:) = Rhist(k,3*i-2:3*i);
+        vk(i,:) = Vhist(k,3*i-2:3*i);
+    end
+
+    rC(k,:) = (m * rk) / M;
+    vC(k,:) = (m * vk) / M;
+end
+
+% Linear prediction:
+% r_C(t) = r_C(t0) + rdot_C(t0)*(t-t0)
+rC0 = rC(1,:);
+vC0 = vC(1,:);
+rC_pred = rC0 + (T - T(1))*vC0;
+
+% Deviation
+rC_err = vecnorm(rC - rC_pred, 2, 2);
+max_rC_dev = max(rC_err);
+
+fprintf('\n===== Center of Mass Check =====\n');
+fprintf('Max deviation between numerical r_C(t) and linear prediction = %.6e km\n', max_rC_dev);
+
+figure('Color','w');
+tiledlayout(3,1);
+
+labels = {'x','y','z'};
+for j = 1:3
+    nexttile;
+    plot(T/yr, rC(:,j)/AU,'k','LineWidth',1.8); hold on;
+    plot(T/yr, rC_pred(:,j)/AU,'rREPLACE_WITH_DASH_DASH','LineWidth',1.4);
+    grid on;
+    ylabel(sprintf('r_{C,%s} [AU]',labels{j}));
+    if j == 1
+        title('Center of mass: numerical history vs linear prediction');
+        legend('Numerical','Linear prediction','Location','best');
+    end
+    if j == 3
+        xlabel('Time [yr]');
+    end
+end
+
+%% 5) Part (c): Angular momentum
+% H(t) = sum_i m_i r_i x v_i
+H = zeros(length(T),3);
+
+for k = 1:length(T)
+    Hk = [0 0 0];
+    for i = 1:N
+        ri = Rhist(k,3*i-2:3*i);
+        vi = Vhist(k,3*i-2:3*i);
+        Hk = Hk + m(i)*cross(ri,vi);
+    end
+    H(k,:) = Hk;
+end
+
+H0 = H(1,:);
+H0_norm = norm(H0);
+rel_H_drift = vecnorm(H - H0, 2, 2) / H0_norm;
+max_rel_H_drift = max(rel_H_drift);
+
+fprintf('\n===== Angular Momentum Check =====\n');
+fprintf('Max relative drift ||H(t)-H(t0)|| / ||H(t0)|| = %.6e\n', max_rel_H_drift);
+
+% Verify planarity
+z_all = zeros(length(T),N);
+for i = 1:N
+    z_all(:,i) = Rhist(:,3*i);
+end
+max_abs_z = max(abs(z_all),[],'all');
+
+fprintf('Max absolute out-of-plane displacement |z| = %.6e km\n', max_abs_z);
+
+figure('Color','w');
+tiledlayout(3,1);
+
+for j = 1:3
+    nexttile;
+    plot(T/yr, H(:,j),'LineWidth',1.7);
+    grid on;
+    ylabel(sprintf('H_%s [kg km^2/s]',labels{j}));
+    if j == 1
+        title('Angular momentum components vs time');
+    end
+    if j == 3
+        xlabel('Time [yr]');
+    end
+end
+
+%% 6) Part (d): Total energy
+% T = kinetic energy
+% U = positive gravitational potential magnitude
+% E = T - U
+
+KE = zeros(length(T),1);
+U  = zeros(length(T),1);
+E  = zeros(length(T),1);
+
+for k = 1:length(T)
+    % Kinetic energy
+    Tk = 0;
+    for i = 1:N
+        vi = Vhist(k,3*i-2:3*i);
+        Tk = Tk + 0.5*m(i)*dot(vi,vi);
+    end
+
+    % Positive potential-energy magnitude U
+    Uk = 0;
+    for i = 1:N-1
+        ri = Rhist(k,3*i-2:3*i);
+        for j = i+1:N
+            rj = Rhist(k,3*j-2:3*j);
+            dij = norm(rj-ri);
+            Uk = Uk + G*m(i)*m(j)/dij;
+        end
+    end
+
+    KE(k) = Tk;
+    U(k)  = Uk;
+    E(k)  = Tk - Uk;
+end
+
+rel_E_err = abs(E - E(1)) / abs(E(1));
+
+fprintf('\n===== Energy Check =====\n');
+fprintf('Initial total energy E(t0) = %.6e kg km^2/s^2\n', E(1));
+fprintf('Max relative energy error |E(t)-E(t0)| / |E(t0)| = %.6e\n', max(rel_E_err));
+
+figure('Color','w');
+tiledlayout(2,1);
+
+nexttile;
+plot(T/yr, KE/abs(E(1)), 'b','LineWidth',1.7); hold on;
+plot(T/yr, U /abs(E(1)), 'r','LineWidth',1.7);
+plot(T/yr, E /abs(E(1)), 'k','LineWidth',2.0);
+grid on;
+ylabel('Normalized energy');
+title('Kinetic, potential, and total energy');
+legend('T(t)','U(t)','E(t)=T(t)-U(t)','Location','best');
+
+nexttile;
+semilogy(T/yr, rel_E_err + eps,'k','LineWidth',1.7);
+grid on;
+xlabel('Time [yr]');
+ylabel('|E(t)-E(t_0)| / |E(t_0)|');
+title('Relative energy error');
+
+%% 7) Summary Section
+fprintf('\n===== In summary =====\n');
+fprintf('1. N = %d bodies were used.\n', N);
+fprintf('2. The system was written in first-order state-space form xdot = f(x). \n');
+fprintf('3. ode45 was used to integrate the equations of motion.\n');
+fprintf('4. The center of mass followed the expected linear motion with max deviation %.3e km.\n', max_rC_dev);
+fprintf('5. The angular momentum relative drift was %.3e.\n', max_rel_H_drift);
+fprintf('6. The maximum energy relative error was %.3e.\n', max(rel_E_err));
+fprintf(['7. The relative energy error stays very small during the entire simulation and increases \n' ...
+    'only gradually over time. This behavior shows that the numerical integration is stable and \n' ...
+    'accurately captures the system dynamics over the chosen time interval. The small drift is \n' ...
+    'caused by the accumulation of truncation and roundoff errors from the ODE solver, which is \n' ...
+    'expected when using a method such as ode45.\n']);
+%% =========================
+% Local function
+% =========================
+function dxdt = eom_nbody(~, x, m, G)
+    N = length(m);
+
+    r = x(1:3*N);
+    v = x(3*N+1:6*N);
+
+    a = zeros(3*N,1);
+
+    for i = 1:N
+        ri = r(3*i-2:3*i);
+        ai = [0;0;0];
+
+        for j = 1:N
+            if j ~= i
+                rj = r(3*j-2:3*j);
+                rij = ri - rj;
+                dij = norm(rij);
+                ai = ai - G*m(j)*rij/(dij^3);
+            end
+        end
+
+        a(3*i-2:3*i) = ai;
+    end
+
+    dxdt = [v; a];
+end
+##### SOURCE END #####
+--></body></html>

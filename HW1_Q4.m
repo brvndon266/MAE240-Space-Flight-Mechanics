@@ -109,9 +109,13 @@ end
 xlabel('x [AU]');
 ylabel('y [AU]');
 zlabel('z [AU]');
-title('3D trajectories of all N bodies');
+title('3D trajectories of all N=4 bodies');
 legend(hOrbit, bodyNames, 'Location','best');
 view(3);
+
+% Note showing marker meaning
+text(0.02, 0.95, 'o = initial position,  s = final position', ...
+    'Units','normalized', 'FontSize',10);
 
 %% 4) Part (b): Center of mass
 % Compute numerical center of mass r_C(t)
