@@ -32,7 +32,7 @@ N = 4;
 % stable test case for verifying center of mass, angular momentum,
 % and total energy behavior.
 
-bodyNames = {'Body 1','Body 2','Body 3','Body 4'};
+bodyNames = {'Sun','Earth','Mars','Venus'};
 
 % Masses [kg]
 m = [1.989e30, 5.972e24, 6.39e23, 4.867e24];   % Sun/Earth/Mars/Venus-like
