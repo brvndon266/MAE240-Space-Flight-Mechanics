@@ -1,6 +1,7 @@
 %% MAE 240 HW — Problems 1 and 2
 % Problem 1: Barycentric N-body problem
-% Problem 2: Bodycentric N-body problem + restricted spacecraft
+% Problem 1B: Restricted body in barycentric frame
+% Problem 2: Bodycentric N-body problem + restricted (N+1)th body
 
 clear; close all; clc;
 
@@ -23,6 +24,13 @@ m_bodies = [
 ];
 
 r_AU = [0; 0.723; 1.000; 1.524; 5.203];
+
+%% Colors
+colors = lines(n);
+sunColor = [1.0 0.75 0.0];
+colors(1,:) = sunColor;
+
+sunMarkerSize = 2.5;
 
 %% Initial conditions
 r0_all = zeros(3*n,1);
@@ -57,16 +65,12 @@ end
 
 x0_bary = [r0_all; v0_all];
 
-%% Time span
+%% Time
 T_end = 12*yr;
 tspan = linspace(0,T_end,5000);
 opts = odeset('RelTol',1e-11,'AbsTol',1e-13);
 
-%% ============================================================
-%  PROBLEM 1 — BARYCENTRIC N-BODY MODEL
-% ============================================================
-
-fprintf('\nRunning Problem 1: barycentric N-body model...\n');
+%% PROBLEM 1A — BARYCENTRIC N-BODY
 
 [T_bary,X_bary] = ode45(@(t,x) eom_NBP_bary(t,x,m_bodies,G), ...
                         tspan,x0_bary,opts);
@@ -74,11 +78,9 @@ fprintf('\nRunning Problem 1: barycentric N-body model...\n');
 r_bary = X_bary(:,1:3*n);
 v_bary = X_bary(:,3*n+1:end);
 
-%% Plot barycentric trajectories
-figure('Color','w','Name','Problem 1 — Barycentric N-body');
+%% Plot Problem 1A
+figure('Color','w','Name','Problem 1A — Barycentric');
 hold on; grid on; axis equal;
-
-colors = lines(n);
 
 for i = 1:n
     ri = r_bary(:,3*i-2:3*i);
@@ -88,66 +90,202 @@ for i = 1:n
         'Color',colors(i,:), ...
         'DisplayName',body_names{i});
 
-    plot3(ri(1,1)/AU,ri(1,2)/AU,ri(1,3)/AU, ...
-        'o','Color',colors(i,:), ...
+    plot3(ri(1,1)/AU,ri(1,2)/AU,ri(1,3)/AU,'o', ...
+        'MarkerSize',4, ...
+        'Color',colors(i,:), ...
+        'MarkerFaceColor',colors(i,:), ...
         'HandleVisibility','off');
 
-    plot3(ri(end,1)/AU,ri(end,2)/AU,ri(end,3)/AU, ...
-        's','Color',colors(i,:), ...
+    plot3(ri(end,1)/AU,ri(end,2)/AU,ri(end,3)/AU,'s', ...
+        'MarkerSize',4, ...
+        'Color',colors(i,:), ...
+        'MarkerFaceColor',colors(i,:), ...
         'HandleVisibility','off');
 end
 
 xlabel('x [AU]');
 ylabel('y [AU]');
 zlabel('z [AU]');
-title('Problem 1: Barycentric N-body trajectories');
+title('Problem 1A: Barycentric trajectories');
 legend('Location','best');
 view(3);
 
-%% Barycenter check
-r_cm_bary = centerOfMassHistory(r_bary,m_bodies);
-P_bary = linearMomentumHistory(v_bary,m_bodies);
-V_cm0 = P_bary(1,:)/sum(m_bodies);
-r_cm_linear = r_cm_bary(1,:) + T_bary(:)*V_cm0;
+annotation('textbox',[0.13 0.78 0.18 0.08], ...
+    'String',{'o = start','s = end'}, ...
+    'FitBoxToText','on', ...
+    'BackgroundColor','w');
 
-figure('Color','w','Name','Problem 1 — Barycenter Check');
-plot(T_bary/yr,r_cm_bary(:,1)/AU,'LineWidth',1.5); hold on;
+%% Problem 1A — Barycenter
+r_cm = centerOfMassHistory(r_bary,m_bodies);
+P = linearMomentumHistory(v_bary,m_bodies);
+V_cm0 = P(1,:)/sum(m_bodies);
+r_cm_linear = r_cm(1,:) + T_bary(:)*V_cm0;
+
+figure('Color','w','Name','Problem 1A — Center of Mass');
+plot(T_bary/yr,r_cm(:,1)/AU,'LineWidth',1.5); hold on;
 plot(T_bary/yr,r_cm_linear(:,1)/AU,'--','LineWidth',1.5);
 grid on;
 xlabel('Time [yr]');
 ylabel('R_{cm,x} [AU]');
-legend('Numerical barycenter','Linear prediction');
-title('Problem 1: Center of mass check');
+legend('Numerical','Linear prediction');
+title('Problem 1A: Center of Mass');
 
-%% Energy check
-[KE_bary,PE_bary,E_bary] = totalEnergyHistory(r_bary,v_bary,m_bodies,G);
-rel_E_err_bary = abs(E_bary - E_bary(1))/abs(E_bary(1));
+%% Problem 1A — Energy and Angular Momentum
+[~,~,E] = totalEnergyHistory(r_bary,v_bary,m_bodies,G);
+relE = abs(E-E(1))/abs(E(1));
 
-figure('Color','w','Name','Problem 1 — Energy Error');
-semilogy(T_bary/yr,rel_E_err_bary,'LineWidth',1.5);
+H_bary = angularMomentumHistory(r_bary,v_bary,m_bodies);
+relH_bary = vecnorm(H_bary-H_bary(1,:),2,2)/norm(H_bary(1,:));
+
+%% PROBLEM 1B — RESTRICTED BODY IN BARYCENTRIC FRAME
+
+iEarth = 3;
+iJupiter = 5;
+
+r0_earth_bary = r_bary(1,3*iEarth-2:3*iEarth).';
+v0_earth_bary = v_bary(1,3*iEarth-2:3*iEarth).';
+
+r0_jup_bary = r_bary(1,3*iJupiter-2:3*iJupiter).';
+
+u_r = r0_earth_bary/norm(r0_earth_bary);
+u_t = v0_earth_bary/norm(v0_earth_bary);
+
+offset = 1e-3*AU;
+r0_sc_bary = r0_earth_bary + offset*u_r;
+
+a_trans = 0.5*(norm(r0_sc_bary) + norm(r0_jup_bary));
+v_dep = sqrt(G*M_sun*(2/norm(r0_sc_bary) - 1/a_trans));
+
+v0_sc_bary = v_dep*u_t;
+x0_sc_bary = [r0_sc_bary; v0_sc_bary];
+
+r_interp_bary = makeInterpolants(T_bary,r_bary,n);
+
+[T_sc_bary,X_sc_bary] = ode45(@(t,x) eom_sc_barycentric(t,x,r_interp_bary,m_bodies,G), ...
+                              tspan,x0_sc_bary,opts);
+
+r_sc_bary = X_sc_bary(:,1:3);
+v_sc_bary = X_sc_bary(:,4:6);
+
+%% Plot Problem 1B
+figure('Color','w','Name','Problem 1B — Restricted Body Barycentric');
+hold on; grid on; axis equal;
+
+for i = 1:n
+    ri = r_bary(:,3*i-2:3*i);
+
+    plot3(ri(:,1)/AU,ri(:,2)/AU,ri(:,3)/AU, ...
+        'LineWidth',1.2, ...
+        'Color',colors(i,:), ...
+        'DisplayName',body_names{i});
+
+    plot3(ri(1,1)/AU,ri(1,2)/AU,ri(1,3)/AU,'o', ...
+        'MarkerSize',4, ...
+        'Color',colors(i,:), ...
+        'MarkerFaceColor',colors(i,:), ...
+        'HandleVisibility','off');
+
+    plot3(ri(end,1)/AU,ri(end,2)/AU,ri(end,3)/AU,'s', ...
+        'MarkerSize',4, ...
+        'Color',colors(i,:), ...
+        'MarkerFaceColor',colors(i,:), ...
+        'HandleVisibility','off');
+end
+
+plot3(r_sc_bary(:,1)/AU,r_sc_bary(:,2)/AU,r_sc_bary(:,3)/AU, ...
+    'k','LineWidth',2,'DisplayName','Restricted Body');
+
+plot3(r_sc_bary(1,1)/AU,r_sc_bary(1,2)/AU,r_sc_bary(1,3)/AU,'ko', ...
+    'MarkerSize',6, ...
+    'MarkerFaceColor','k', ...
+    'HandleVisibility','off');
+
+plot3(r_sc_bary(end,1)/AU,r_sc_bary(end,2)/AU,r_sc_bary(end,3)/AU,'ks', ...
+    'MarkerSize',6, ...
+    'MarkerFaceColor','k', ...
+    'HandleVisibility','off');
+
+xlabel('x [AU]');
+ylabel('y [AU]');
+zlabel('z [AU]');
+title('Problem 1B: Restricted Body in Barycentric Frame');
+legend('Location','best');
+view(3);
+
+annotation('textbox',[0.13 0.78 0.18 0.08], ...
+    'String',{'o = start','s = end'}, ...
+    'FitBoxToText','on', ...
+    'BackgroundColor','w');
+
+%% Problem 1B — Energy and angular momentum diagnostics
+E_sc_bary = restrictedEnergyHistory(T_sc_bary,r_sc_bary,v_sc_bary,r_interp_bary,m_bodies,G);
+H_sc_bary = cross(r_sc_bary,v_sc_bary,2);
+
+relE_sc_bary = abs(E_sc_bary-E_sc_bary(1))/abs(E_sc_bary(1));
+relH_sc_bary = vecnorm(H_sc_bary-H_sc_bary(1,:),2,2)/norm(H_sc_bary(1,:));
+
+%% Problem 1 — Combined Energy and Angular Momentum Diagnostics
+figure('Color','w','Name','Problem 1 — Energy and Angular Momentum Diagnostics');
+
+subplot(2,2,1);
+semilogy(T_bary/yr,relE,'LineWidth',1.5);
 grid on;
 xlabel('Time [yr]');
-ylabel('|E - E_0| / |E_0|');
-title('Problem 1: Relative energy error');
+ylabel('Relative Energy Error');
+title('1A: N-body Energy');
 
-fprintf('Problem 1 max relative energy error = %.4e\n',max(rel_E_err_bary));
+subplot(2,2,2);
+semilogy(T_bary/yr,relH_bary,'LineWidth',1.5);
+grid on;
+xlabel('Time [yr]');
+ylabel('Relative Angular Momentum Error');
+title('1A: N-body Angular Momentum');
 
-%% ============================================================
-%  PROBLEM 2A — BODYCENTRIC N-BODY MODEL
-% ============================================================
+subplot(2,2,3);
+semilogy(T_sc_bary/yr,relE_sc_bary,'LineWidth',1.5);
+grid on;
+xlabel('Time [yr]');
+ylabel('Relative Energy Change');
+title('1B: Restricted Body Energy');
 
-fprintf('\nRunning Problem 2A: bodycentric N-body model...\n');
+subplot(2,2,4);
+semilogy(T_sc_bary/yr,relH_sc_bary,'LineWidth',1.5);
+grid on;
+xlabel('Time [yr]');
+ylabel('Relative Angular Momentum Change');
+title('1B: Restricted Body Angular Momentum');
 
-% Convert barycentric initial conditions to Sun-centered bodycentric coordinates
+sgtitle('Problem 1: N-body vs Restricted Body Diagnostics');
+
+%% Problem 1B — Distance diagnostics
+rE_bary = zeros(length(T_sc_bary),3);
+rJ_bary = zeros(length(T_sc_bary),3);
+
+for k = 1:length(T_sc_bary)
+    rE_bary(k,:) = r_interp_bary{iEarth}(T_sc_bary(k)).';
+    rJ_bary(k,:) = r_interp_bary{iJupiter}(T_sc_bary(k)).';
+end
+
+dE_bary = vecnorm(r_sc_bary-rE_bary,2,2);
+dJ_bary = vecnorm(r_sc_bary-rJ_bary,2,2);
+
+figure('Color','w','Name','Problem 1B — Distance Diagnostics');
+plot(T_sc_bary/yr,dE_bary/AU,'LineWidth',1.5); hold on;
+plot(T_sc_bary/yr,dJ_bary/AU,'LineWidth',1.5);
+grid on;
+xlabel('Time [yr]');
+ylabel('Distance [AU]');
+legend('Distance to Earth','Distance to Jupiter');
+title('Problem 1B: Distance Diagnostics');
+
+%% PROBLEM 2A — BODYCENTRIC N-BODY
+
 r0_body = zeros(3*n,1);
 v0_body = zeros(3*n,1);
 
-r_sun0 = r0_all(1:3);
-v_sun0 = v0_all(1:3);
-
 for i = 1:n
-    r0_body(3*i-2:3*i) = r0_all(3*i-2:3*i) - r_sun0;
-    v0_body(3*i-2:3*i) = v0_all(3*i-2:3*i) - v_sun0;
+    r0_body(3*i-2:3*i) = r0_all(3*i-2:3*i) - r0_all(1:3);
+    v0_body(3*i-2:3*i) = v0_all(3*i-2:3*i) - v0_all(1:3);
 end
 
 x0_body = [r0_body; v0_body];
@@ -158,28 +296,48 @@ x0_body = [r0_body; v0_body];
 r_body = X_body(:,1:3*n);
 v_body = X_body(:,3*n+1:end);
 
-%% Convert barycentric solution to Sun-centered form for comparison
+%% Convert barycentric solution to Sun-centered form
 r_bary_rel = zeros(size(r_bary));
 
 for k = 1:length(T_bary)
-    r_sun = r_bary(k,1:3);
+    rSun = r_bary(k,1:3);
 
     for i = 1:n
-        r_bary_rel(k,3*i-2:3*i) = r_bary(k,3*i-2:3*i) - r_sun;
+        r_bary_rel(k,3*i-2:3*i) = r_bary(k,3*i-2:3*i) - rSun;
     end
 end
 
-%% Plot bodycentric trajectories
-figure('Color','w','Name','Problem 2A — Bodycentric N-body');
+%% Plot Problem 2A
+figure('Color','w','Name','Problem 2A — Bodycentric');
 hold on; grid on; axis equal;
 
 for i = 1:n
     ri = r_body(:,3*i-2:3*i);
 
-    plot3(ri(:,1)/AU,ri(:,2)/AU,ri(:,3)/AU, ...
-        'LineWidth',1.5, ...
-        'Color',colors(i,:), ...
-        'DisplayName',body_names{i});
+    if i == 1
+        plot3(0,0,0,'o', ...
+            'MarkerSize',sunMarkerSize, ...
+            'MarkerFaceColor',sunColor, ...
+            'MarkerEdgeColor',sunColor, ...
+            'DisplayName','Sun');
+    else
+        plot3(ri(:,1)/AU,ri(:,2)/AU,ri(:,3)/AU, ...
+            'LineWidth',1.5, ...
+            'Color',colors(i,:), ...
+            'DisplayName',body_names{i});
+
+        plot3(ri(1,1)/AU,ri(1,2)/AU,ri(1,3)/AU,'o', ...
+            'MarkerSize',5, ...
+            'Color',colors(i,:), ...
+            'MarkerFaceColor',colors(i,:), ...
+            'HandleVisibility','off');
+
+        plot3(ri(end,1)/AU,ri(end,2)/AU,ri(end,3)/AU,'s', ...
+            'MarkerSize',5, ...
+            'Color',colors(i,:), ...
+            'MarkerFaceColor',colors(i,:), ...
+            'HandleVisibility','off');
+    end
 end
 
 xlabel('x [AU]');
@@ -189,36 +347,37 @@ title('Problem 2A: Bodycentric trajectories');
 legend('Location','best');
 view(3);
 
-%% Compare Problem 1 and Problem 2A
-figure('Color','w','Name','Problem 2A — Comparison Error');
+annotation('textbox',[0.13 0.78 0.18 0.08], ...
+    'String',{'o = start','s = end'}, ...
+    'FitBoxToText','on', ...
+    'BackgroundColor','w');
+
+%% Problem 2A — Integration accuracy comparison error
+figure('Color','w','Name','Problem 2A — Bodycentric Comparison Error');
 hold on; grid on;
 
 for i = 2:n
-    err_i = vecnorm(r_body(:,3*i-2:3*i) - r_bary_rel(:,3*i-2:3*i),2,2);
-    plot(T_body/yr,err_i,'LineWidth',1.5,'DisplayName',body_names{i});
+    ri_body = r_body(:,3*i-2:3*i);
+    ri_bary_rel = r_bary_rel(:,3*i-2:3*i);
+
+    err_i = vecnorm(ri_body-ri_bary_rel,2,2);
+
+    semilogy(T_body/yr,err_i/AU, ...
+        'LineWidth',1.5, ...
+        'Color',colors(i,:), ...
+        'DisplayName',body_names{i});
 end
 
 xlabel('Time [yr]');
-ylabel('Position difference [km]');
-title('Problem 2A: Bodycentric vs barycentric-relative comparison');
+ylabel('Position Difference [AU]');
+title('Problem 2A: Difference Between Bodycentric and Shifted Barycentric Results');
 legend('Location','best');
 
-%% ============================================================
-%  PROBLEM 2B — RESTRICTED SPACECRAFT
-% ============================================================
-
-fprintf('\nRunning Problem 2B: restricted spacecraft...\n');
-
-% Use Earth departure and Jupiter transfer-like initial condition
-iEarth = 3;
-iJupiter = 5;
+%% PROBLEM 2B — RESTRICTED BODY IN BODYCENTRIC FRAME
 
 r0_earth = r_body(1,3*iEarth-2:3*iEarth).';
 v0_earth = v_body(1,3*iEarth-2:3*iEarth).';
 r0_jup   = r_body(1,3*iJupiter-2:3*iJupiter).';
-
-r1 = norm(r0_earth);
-r2 = norm(r0_jup);
 
 u_r = r0_earth/norm(r0_earth);
 u_t = v0_earth/norm(v0_earth);
@@ -226,84 +385,105 @@ u_t = v0_earth/norm(v0_earth);
 offset = 1e-3*AU;
 r0_sc = r0_earth + offset*u_r;
 
-a_trans = 0.5*(norm(r0_sc) + r2);
+a_trans = 0.5*(norm(r0_sc) + norm(r0_jup));
 v_dep = sqrt(G*M_sun*(2/norm(r0_sc) - 1/a_trans));
 
-v0_sc = v_dep*u_t;
-x0_sc = [r0_sc; v0_sc];
+x0_sc = [r0_sc; v_dep*u_t];
 
-% Interpolants for the bodycentric planet trajectories
 r_interp = makeInterpolants(T_body,r_body,n);
 
 [T_sc,X_sc] = ode45(@(t,x) eom_sc_bodycentric(t,x,r_interp,m_bodies,G), ...
                     tspan,x0_sc,opts);
 
 r_sc = X_sc(:,1:3);
-v_sc = X_sc(:,4:6);
 
-%% Plot spacecraft with planets
-figure('Color','w','Name','Problem 2B — Restricted Spacecraft');
+%% Plot Problem 2B
+figure('Color','w','Name','Problem 2B — Restricted Body');
 hold on; grid on; axis equal;
 
 for i = 1:n
     ri = r_body(:,3*i-2:3*i);
-    plot3(ri(:,1)/AU,ri(:,2)/AU,ri(:,3)/AU, ...
-        'LineWidth',1.2, ...
-        'Color',colors(i,:), ...
-        'DisplayName',body_names{i});
+
+    if i == 1
+        plot3(0,0,0,'o', ...
+            'MarkerSize',sunMarkerSize, ...
+            'MarkerFaceColor',sunColor, ...
+            'MarkerEdgeColor',sunColor, ...
+            'DisplayName','Sun');
+
+    else
+        plot3(ri(:,1)/AU,ri(:,2)/AU,ri(:,3)/AU, ...
+            'LineWidth',1.2, ...
+            'Color',colors(i,:), ...
+            'DisplayName',body_names{i});
+
+        plot3(ri(1,1)/AU,ri(1,2)/AU,ri(1,3)/AU,'o', ...
+            'MarkerSize',4, ...
+            'Color',colors(i,:), ...
+            'MarkerFaceColor',colors(i,:), ...
+            'HandleVisibility','off');
+
+        plot3(ri(end,1)/AU,ri(end,2)/AU,ri(end,3)/AU,'s', ...
+            'MarkerSize',4, ...
+            'Color',colors(i,:), ...
+            'MarkerFaceColor',colors(i,:), ...
+            'HandleVisibility','off');
+    end
 end
 
 plot3(r_sc(:,1)/AU,r_sc(:,2)/AU,r_sc(:,3)/AU, ...
-    'k','LineWidth',2.0,'DisplayName','Spacecraft');
+    'k','LineWidth',2,'DisplayName','Restricted Body');
 
-plot3(r_sc(1,1)/AU,r_sc(1,2)/AU,r_sc(1,3)/AU, ...
-    'ko','MarkerFaceColor','k','HandleVisibility','off');
+plot3(r_sc(1,1)/AU,r_sc(1,2)/AU,r_sc(1,3)/AU,'ko', ...
+    'MarkerSize',6, ...
+    'MarkerFaceColor','k', ...
+    'HandleVisibility','off');
 
-plot3(r_sc(end,1)/AU,r_sc(end,2)/AU,r_sc(end,3)/AU, ...
-    'ks','MarkerFaceColor','k','HandleVisibility','off');
+plot3(r_sc(end,1)/AU,r_sc(end,2)/AU,r_sc(end,3)/AU,'ks', ...
+    'MarkerSize',6, ...
+    'MarkerFaceColor','k', ...
+    'HandleVisibility','off');
 
 xlabel('x [AU]');
 ylabel('y [AU]');
 zlabel('z [AU]');
-title('Problem 2B: Restricted spacecraft in bodycentric frame');
+title('Problem 2B: Restricted (N+1)th Body');
 legend('Location','best');
 view(3);
 
-%% Distance from spacecraft to Earth and Jupiter
-r_earth_sc = zeros(length(T_sc),3);
-r_jup_sc   = zeros(length(T_sc),3);
+annotation('textbox',[0.13 0.78 0.18 0.08], ...
+    'String',{'o = start','s = end'}, ...
+    'FitBoxToText','on', ...
+    'BackgroundColor','w');
+
+%% Problem 2B — Distance diagnostics
+rE = zeros(length(T_sc),3);
+rJ = zeros(length(T_sc),3);
 
 for k = 1:length(T_sc)
-    r_earth_sc(k,:) = r_interp{iEarth}(T_sc(k)).';
-    r_jup_sc(k,:)   = r_interp{iJupiter}(T_sc(k)).';
+    rE(k,:) = r_interp{iEarth}(T_sc(k)).';
+    rJ(k,:) = r_interp{iJupiter}(T_sc(k)).';
 end
 
-d_sc_earth = vecnorm(r_sc - r_earth_sc,2,2);
-d_sc_jup   = vecnorm(r_sc - r_jup_sc,2,2);
+dE = vecnorm(r_sc-rE,2,2);
+dJ = vecnorm(r_sc-rJ,2,2);
 
-figure('Color','w','Name','Problem 2B — Spacecraft Distances');
-plot(T_sc/yr,d_sc_earth/AU,'LineWidth',1.5); hold on;
-plot(T_sc/yr,d_sc_jup/AU,'LineWidth',1.5);
+figure('Color','w','Name','Problem 2B — Distance Diagnostics');
+plot(T_sc/yr,dE/AU,'LineWidth',1.5); hold on;
+plot(T_sc/yr,dJ/AU,'LineWidth',1.5);
 grid on;
 xlabel('Time [yr]');
 ylabel('Distance [AU]');
 legend('Distance to Earth','Distance to Jupiter');
-title('Problem 2B: Spacecraft distance diagnostics');
+title('Problem 2B: Distance Diagnostics');
 
-fprintf('Minimum spacecraft-Earth distance = %.4e km\n',min(d_sc_earth));
-fprintf('Minimum spacecraft-Jupiter distance = %.4e km\n',min(d_sc_jup));
+%% FUNCTIONS
 
-%% ============================================================
-%  LOCAL FUNCTIONS
-% ============================================================
+function dx = eom_NBP_bary(~,x,m,G)
 
-function dxdt = eom_NBP_bary(~,x,m_bodies,G)
-
-n = numel(m_bodies);
-
+n = numel(m);
 r = x(1:3*n);
 v = x(3*n+1:end);
-
 a = zeros(3*n,1);
 
 for i = 1:n
@@ -312,117 +492,145 @@ for i = 1:n
 
     for j = 1:n
         if j == i
-            continue
+            continue;
         end
 
         rj = r(3*j-2:3*j);
-        rij = ri - rj;
+        rij = ri-rj;
 
-        ai = ai - G*m_bodies(j)*rij/norm(rij)^3;
+        ai = ai - G*m(j)*rij/norm(rij)^3;
     end
 
     a(3*i-2:3*i) = ai;
 end
 
-dxdt = [v; a];
-
+dx = [v; a];
 end
 
-function dxdt = eom_NBP_bodycentric(~,x,m_bodies,G)
+function dx = eom_NBP_bodycentric(~,x,m,G)
 
-n = numel(m_bodies);
-
+n = numel(m);
 r = x(1:3*n);
 v = x(3*n+1:end);
-
 a = zeros(3*n,1);
 
-% Central body is fixed at the origin in this bodycentric frame
 a(1:3) = [0;0;0];
 
 for i = 2:n
     ri = r(3*i-2:3*i);
 
-    % Direct term from central body
-    ai = -G*(m_bodies(1) + m_bodies(i))*ri/norm(ri)^3;
+    ai = -G*(m(1)+m(i))*ri/norm(ri)^3;
 
-    % Indirect terms from other planets
     for j = 2:n
         if j == i
-            continue
+            continue;
         end
 
         rj = r(3*j-2:3*j);
-        rij = ri - rj;
+        rij = ri-rj;
 
-        ai = ai - G*m_bodies(j)*(rij/norm(rij)^3 + rj/norm(rj)^3);
+        ai = ai - G*m(j)*(rij/norm(rij)^3 + rj/norm(rj)^3);
     end
 
     a(3*i-2:3*i) = ai;
 end
 
-dxdt = [v; a];
-
+dx = [v; a];
 end
 
-function dxdt = eom_sc_bodycentric(t,x,r_interp,m_bodies,G)
+function dx = eom_sc_barycentric(t,x,r_interp,m,G)
 
-n = numel(m_bodies);
+n = numel(m);
 
-r_sc = x(1:3);
-v_sc = x(4:6);
+r = x(1:3);
+v = x(4:6);
 
-% Direct solar term
-a_sc = -G*m_bodies(1)*r_sc/norm(r_sc)^3;
+a = zeros(3,1);
 
-% Planet perturbation terms
+for j = 1:n
+    rj = r_interp{j}(t);
+    rj = rj(:);
+
+    rij = r-rj;
+
+    a = a - G*m(j)*rij/norm(rij)^3;
+end
+
+dx = [v; a];
+end
+
+function dx = eom_sc_bodycentric(t,x,r_interp,m,G)
+
+n = numel(m);
+
+r = x(1:3);
+v = x(4:6);
+
+a = -G*m(1)*r/norm(r)^3;
+
 for j = 2:n
     rj = r_interp{j}(t);
     rj = rj(:);
 
-    r_scj = r_sc - rj;
+    rij = r-rj;
 
-    a_sc = a_sc - G*m_bodies(j)*(r_scj/norm(r_scj)^3 + rj/norm(rj)^3);
+    a = a - G*m(j)*(rij/norm(rij)^3 + rj/norm(rj)^3);
 end
 
-dxdt = [v_sc; a_sc];
-
+dx = [v; a];
 end
 
-function r_cm = centerOfMassHistory(r_all,m_bodies)
+function rcm = centerOfMassHistory(r_all,m)
 
-n = numel(m_bodies);
+n = numel(m);
 Nt = size(r_all,1);
-M = sum(m_bodies);
+M = sum(m);
 
-r_cm = zeros(Nt,3);
+rcm = zeros(Nt,3);
 
 for i = 1:n
-    ri = r_all(:,3*i-2:3*i);
-    r_cm = r_cm + m_bodies(i)*ri;
+    rcm = rcm + m(i)*r_all(:,3*i-2:3*i);
 end
 
-r_cm = r_cm/M;
-
+rcm = rcm/M;
 end
 
-function P = linearMomentumHistory(v_all,m_bodies)
+function P = linearMomentumHistory(v_all,m)
 
-n = numel(m_bodies);
+n = numel(m);
 Nt = size(v_all,1);
 
 P = zeros(Nt,3);
 
 for i = 1:n
-    vi = v_all(:,3*i-2:3*i);
-    P = P + m_bodies(i)*vi;
+    P = P + m(i)*v_all(:,3*i-2:3*i);
+end
 end
 
+function H = angularMomentumHistory(r_all,v_all,m)
+
+n = numel(m);
+Nt = size(r_all,1);
+
+H = zeros(Nt,3);
+
+for k = 1:Nt
+    Hk = zeros(1,3);
+
+    for i = 1:n
+        ri = r_all(k,3*i-2:3*i);
+        vi = v_all(k,3*i-2:3*i);
+
+        Hk = Hk + cross(ri,m(i)*vi);
+    end
+
+    H(k,:) = Hk;
+end
 end
 
-function [KE,PE,E] = totalEnergyHistory(r_all,v_all,m_bodies,G)
+function [KE,PE,E] = totalEnergyHistory(r_all,v_all,m,G)
 
-n = numel(m_bodies);
+n = numel(m);
 Nt = size(r_all,1);
 
 KE = zeros(Nt,1);
@@ -431,7 +639,7 @@ PE = zeros(Nt,1);
 for k = 1:Nt
     for i = 1:n
         vi = v_all(k,3*i-2:3*i);
-        KE(k) = KE(k) + 0.5*m_bodies(i)*dot(vi,vi);
+        KE(k) = KE(k) + 0.5*m(i)*dot(vi,vi);
     end
 
     for i = 1:n-1
@@ -439,15 +647,36 @@ for k = 1:Nt
 
         for j = i+1:n
             rj = r_all(k,3*j-2:3*j);
-            rij = norm(ri-rj);
-
-            PE(k) = PE(k) - G*m_bodies(i)*m_bodies(j)/rij;
+            PE(k) = PE(k) - G*m(i)*m(j)/norm(ri-rj);
         end
     end
 end
 
 E = KE + PE;
+end
 
+function E = restrictedEnergyHistory(T,r_sc,v_sc,r_interp,m,G)
+
+Nt = length(T);
+n = numel(m);
+E = zeros(Nt,1);
+
+for k = 1:Nt
+    r = r_sc(k,:).';
+    v = v_sc(k,:).';
+
+    KE = 0.5*dot(v,v);
+    PE = 0;
+
+    for j = 1:n
+        rj = r_interp{j}(T(k));
+        rj = rj(:);
+
+        PE = PE - G*m(j)/norm(r-rj);
+    end
+
+    E(k) = KE + PE;
+end
 end
 
 function r_interp = makeInterpolants(T,r_all,n)
@@ -463,5 +692,4 @@ for i = 1:n
 
     r_interp{i} = @(t) [Fx(t); Fy(t); Fz(t)];
 end
-
 end
