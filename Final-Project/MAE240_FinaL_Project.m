@@ -12,9 +12,7 @@
 
 clear; close all; clc;
 
-%% -----------------------------------------------------------------------
-%% CONSTANTS & PARAMETERS
-%% -----------------------------------------------------------------------
+%% Constants & Parameters
 
 % Earth
 mu_E = 398600.4418;         % [km^3/s^2]
@@ -33,15 +31,14 @@ T_S   = 365.25 * 86400;     % Period [s]
 n_S   = 2*pi / T_S;         % Mean motion [rad/s]
 
 % SRP
-% Acceleration magnitude: a_SRP = (P_SR * C_R * A/m)
-% P_SR = 4.56e-6 N/m^2 at 1 AU; typical C_R*A/m ~ 0.02 m^2/kg
-% => a_SRP ~ 9.1e-8 m/s^2 = 9.1e-11 km/s^2
-% Use 1e-10 km/s^2 as a conservative placeholder — adjust A/m as needed
-aSRP_mag = 1e-10;           % [km/s^2]
+P_sun = 1353;       % W/m^2
+c = 3e8;            % m/s
+F_SRP = (P_sun/c); 
+C_R = 1;            % Radiation Pressure Coefficient
+Area_mass_ratio = 0.0222;  % m^2/kg
 
-%% -----------------------------------------------------------------------
-%% INITIAL GEO ORBIT
-%% -----------------------------------------------------------------------
+aSRP_mag = (F_SRP * C_R * Area_mass_ratio)*1e-3; 
+%% Initial GEO Orbit
 
 a0   = 42164.0;             % [km]
 e0   = 0.001;               % Small but nonzero to avoid singularity
@@ -52,20 +49,16 @@ f0   = deg2rad(0.0);        % True anomaly [rad]
 
 x0 = [a0; e0; i0; Om0; w0; f0];
 
-%% -----------------------------------------------------------------------
-%% SIMULATION TIME  (1 year)
-%% -----------------------------------------------------------------------
+%% Simulation 
 
 T_GEO  = 2*pi * sqrt(a0^3 / mu_E);   % GEO period [s]
-nYear= 25;
+nYear= 1;
 nRevs  = 365 * nYear;
 tspan  = [0, nRevs * T_GEO];
 
 opts = odeset('RelTol', 1e-10, 'AbsTol', 1e-10);
 
-%% -----------------------------------------------------------------------
-%% RUN ALL FOUR CASES
-%% -----------------------------------------------------------------------
+%% Run all four cases
 
 fprintf('Running Case 1: Keplerian (control)...\n');
 [t1, X1] = ode113(@(t,x) GVE_full(t, x, mu_E, ...
@@ -97,9 +90,7 @@ fprintf('Running Case 4: Keplerian + Lunisolar Gravity + SRP...\n');
 
 fprintf('All cases complete.\n');
 
-%% -----------------------------------------------------------------------
 %% POST-PROCESS: convert to days, unwrap angles
-%% -----------------------------------------------------------------------
 
 cases = {X1, X2, X3, X4};
 times = {t1, t2, t3, t4};
@@ -109,9 +100,7 @@ labels = {'Case 1: Keplerian', ...
           'Case 4: + Lunisolar + SRP'};
 colors = {'k', 'b', 'r', [0 0.5 0]};
 
-%% -----------------------------------------------------------------------
 %% FIGURE 1: Orbital Elements vs Time (one figure for each case)
-%% -----------------------------------------------------------------------
 
 elemNames = {'a [km]', 'e', 'i [deg]', '\Omega [deg]', '\omega [deg]', 'f [deg]'};
 
@@ -152,9 +141,7 @@ for c = 1:4
     sgtitle(['GEO Orbital Elements — ', labels{c}]);
 end
 
-%% -----------------------------------------------------------------------
 %% FIGURE 2: Delta elements (deviation from Keplerian)
-%% -----------------------------------------------------------------------
 
 figure('Name','Element Deviations from Keplerian','Position',[100 100 1400 900]);
 
@@ -208,9 +195,7 @@ for el = 1:6
 end
 sgtitle('GEO Element Deviations from Keplerian Baseline');
 
-%% -----------------------------------------------------------------------
 %% FIGURE 3: 3D Trajectories
-%% -----------------------------------------------------------------------
 
 figure('Name','3D Trajectories','Position',[100 100 1200 900]);
 for c = 1:4
@@ -234,13 +219,9 @@ sgtitle('GEO 3D Trajectories');
 
 fprintf('\nDone. Figures generated.\n');
 
-%% -----------------------------------------------------------------------
-%% PRINT START AND END STATES FOR ALL CASES
-%% -----------------------------------------------------------------------
+%% Print Statements
 
-fprintf('\n========================================\n');
-fprintf('       ORBITAL ELEMENT SUMMARY\n');
-fprintf('========================================\n');
+fprintf('Orbital Element Summary\n');
 
 elemLabels = {'a [km]', 'e', 'i [deg]', 'Omega [deg]', 'omega [deg]', 'f [deg]'};
 
@@ -270,13 +251,9 @@ for c = 1:4
     end
 end
 
-%% -----------------------------------------------------------------------
-%% SPECIFICALLY HIGHLIGHT SRP CASE (Case 3)
-%% -----------------------------------------------------------------------
+%% SRP CASE (Case 3)
 
-fprintf('\n========================================\n');
-fprintf('   SRP PERTURBATION EFFECT (Case 3)\n');
-fprintf('========================================\n');
+fprintf('SRP Perturbation Effect (Case 3)\n');
 
 X_kep = cases{1};   % Keplerian baseline
 X_srp = cases{3};   % SRP case
@@ -329,9 +306,6 @@ fprintf('  dX = %+.4f km\n', diff_r(1));
 fprintf('  dY = %+.4f km\n', diff_r(2));
 fprintf('  dZ = %+.4f km\n', diff_r(3));
 fprintf('  |dr| = %.4f km = %.1f m\n', norm(diff_r), norm(diff_r)*1000);
-%% =======================================================================
-%% LOCAL FUNCTIONS
-%% =======================================================================
 
 function dx = GVE_full(t, x, mu_E, ...
                         mu_M, a_M, n_M, i_M, ...
@@ -339,7 +313,7 @@ function dx = GVE_full(t, x, mu_E, ...
                         aSRP_mag, ...
                         use_grav, use_SRP, ~)
 
-%% Unpack state
+% Unpack state
 a  = x(1);
 e  = x(2);
 i  = x(3);
@@ -351,23 +325,21 @@ f  = x(6);
 e = max(e, 1e-8);
 i = max(i, deg2rad(0.01));
 
-%% Orbit geometry
+% Orbit geometry
 p     = a * (1 - e^2);
 r     = p / (1 + e*cos(f));
 h     = sqrt(mu_E * p);
 eta   = sqrt(1 - e^2);
 n_sat = sqrt(mu_E / a^3);
 
-%% RTN frame unit vectors (inertial)
+% RTN frame unit vectors (inertial)
 [rI, vI] = oe2rv(a, e, i, Om, w, f, mu_E);
 
 er = rI / norm(rI);
 eh = cross(rI, vI);  eh = eh / norm(eh);
 et = cross(eh, er);
 
-%% -----------------------------------------------------------------------
-%% GRAVITY PERTURBATIONS (lunisolar third-body) via RTN projection
-%% -----------------------------------------------------------------------
+%% Gravity Perturbations (lunisolar third-body) via RTN projection
 
 aI_grav = zeros(3,1);
 
@@ -400,9 +372,7 @@ R = dot(aI_grav, er);
 T = dot(aI_grav, et);
 N = dot(aI_grav, eh);
 
-%% -----------------------------------------------------------------------
 %% GVE: gravity contribution
-%% -----------------------------------------------------------------------
 
 u = w + f;
 
@@ -414,9 +384,7 @@ dw  = (1/(h*e)) * (-p*cos(f)*R + (p+r)*sin(f)*T) ...
       - (r*sin(u)*cos(i) / (h*sin(i))) * N;
 df  = h/r^2 + (1/(h*e)) * (p*cos(f)*R - (p+r)*sin(f)*T);
 
-%% -----------------------------------------------------------------------
-%% SRP PERTURBATION — Cook averaged model (Eq. 41-44 from Guffanti 2017)
-%% -----------------------------------------------------------------------
+% SRP PERTURBATION — Cook averaged model (Eq. 41-44 from Guffanti 2017)
 
 if use_SRP
     eps_S    = deg2rad(23.45);
@@ -465,7 +433,7 @@ if use_SRP
 
     W = Wsinw * sin(w) + Wcosw * cos(w);
 
-    % --- Averaged element rates (Eq. 41) ---
+    % Averaged element rates (Eq. 41) 
     % da/dt = 0 for full sunlight
 
     de_srp  =  (3*eta) / (2*n_sat*a) * Sp;
@@ -491,9 +459,7 @@ else
     df_srp  = 0;
 end
 
-%% -----------------------------------------------------------------------
-%% TOTAL RATES
-%% -----------------------------------------------------------------------
+% Total Rates
 
 da  = da;
 de  = de  + de_srp;
@@ -505,7 +471,6 @@ df  = df  + df_srp;
 dx = [da; de; di; dOm; dw; df];
 
 end
-% -------------------------------------------------------------------------
 
 function [rI, vI] = oe2rv(a, e, i, Om, w, f, mu)
 % OE2RV  Convert classical orbital elements to inertial position/velocity.
