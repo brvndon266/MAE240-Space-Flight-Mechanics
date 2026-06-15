@@ -52,7 +52,7 @@ x0 = [a0; e0; i0; Om0; w0; f0];
 %% Simulation 
 
 T_GEO  = 2*pi * sqrt(a0^3 / mu_E);   % GEO period [s]
-nYear= 1;
+nYear= 20;
 nRevs  = 365 * nYear;
 tspan  = [0, nRevs * T_GEO];
 
